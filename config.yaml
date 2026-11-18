@@ -26,6 +26,8 @@ video:
   max_sekunden: 59
   min_clips_pro_zusammenschnitt: 2
   max_videos_pro_durchlauf: 1
+  facecam_automatisch: true  # Facecam per Gesichtserkennung finden → oben Facecam, unten Gameplay
+  nur_mit_facecam: true      # Clips ohne erkennbare Facecam überspringen
   hook_text: "GTA 6 IST DA"  # großer Text in den ersten 3 Sekunden (leer = aus)
   schrift: "Montserrat"     # Windows: "Arial Black", Mac: "Arial Black" oder "Impact"
   untertitel_farbe: "&H00FFFFFF"     # Weiß (ASS-Format &HAABBGGRR)

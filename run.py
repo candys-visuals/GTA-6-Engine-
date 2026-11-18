@@ -135,6 +135,23 @@ def hochladen(datei, titel_daten, cfg, state):
             print(f"    ! YouTube-Upload fehlgeschlagen: {e}")
 
 
+def pruefe_facecam(c, vcfg, state=None):
+    """Facecam automatisch finden. Ohne Facecam wird der Clip (je nach Einstellung) übersprungen."""
+    if not c.get("facecam") and vcfg.get("facecam_automatisch", True):
+        from clipper import facecam
+        try:
+            c["facecam"] = facecam.detect(c["datei"])
+        except Exception as e:
+            print(f"  ! Facecam-Erkennung fehlgeschlagen ({c['name']}): {e}")
+    if c.get("facecam"):
+        print(f"  📷 {c['name']}: Facecam gefunden")
+    elif vcfg.get("nur_mit_facecam", True):
+        print(f"  – {c['name']}: keine Facecam / kein Gameplay → übersprungen")
+        c["ueberspringen"] = True
+        if state and c.get("id"):
+            state.mark_used(c["id"], "keine_facecam")
+
+
 def durchlauf(cfg, state, upload=True):
     from clipper import twitch
     if not cfg.get("alle_kanaele") and not cfg.get("kanaele"):
@@ -142,16 +159,30 @@ def durchlauf(cfg, state, upload=True):
     print(f"[{dt.datetime.now():%H:%M}] Suche neue GTA-6-Clips …")
     clips = twitch.find_clips(cfg, state)
     print(f"  {len(clips)} neue Clips gefunden")
-    plan = plane_videos(clips, cfg["video"])
-    if not plan:
-        print("  Noch nicht genug Material – nächster Versuch beim nächsten Durchlauf.")
-        return
+    vcfg = cfg["video"]
     ausgabe = cfg.get("ausgabe_ordner", "ausgabe")
+    benoetigt = vcfg.get("max_videos_pro_durchlauf", 1) * vcfg.get("max_sekunden", 59) + 30
+    kandidaten, summe = [], 0.0
+    for c in clips[:40]:
+        try:
+            c["datei"] = twitch.download(c, Path(ausgabe) / "_downloads")
+        except Exception as e:
+            print(f"  ! Download fehlgeschlagen ({c['login']}): {e}")
+            continue
+        c["name"] = c["login"]
+        pruefe_facecam(c, vcfg, state)
+        if c.get("ueberspringen"):
+            continue
+        kandidaten.append(c)
+        summe += min(c["duration"], vcfg.get("max_sekunden", 59))
+        if summe >= benoetigt:
+            break
+    plan = plane_videos(kandidaten, vcfg)
+    if not plan:
+        print("  Noch nicht genug passendes Material – nächster Versuch beim nächsten Durchlauf.")
+        return
     for gruppe in plan:
         try:
-            for c in gruppe:
-                c["datei"] = twitch.download(c, Path(ausgabe) / "_downloads")
-                c["name"] = c["login"]
             fertig = baue_video(gruppe, cfg, Path(ausgabe) / "_arbeit", ausgabe)
             for c in gruppe:
                 state.mark_used(c["id"])
@@ -190,6 +221,9 @@ def main():
     state = State(os.environ.get("STATE_DB", "state.db"))
     if a.datei:
         gruppe = [{"datei": Path(d), "name": Path(d).stem} for d in a.datei]
+        for c in gruppe:
+            pruefe_facecam(c, cfg["video"])
+        gruppe = [c for c in gruppe if not c.get("ueberspringen")]
         ausgabe = cfg.get("ausgabe_ordner", "ausgabe")
         fertig = baue_video(gruppe, cfg, Path(ausgabe) / "_arbeit", ausgabe)
         if not a.kein_upload:
