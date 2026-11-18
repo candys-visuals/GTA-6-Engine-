@@ -93,11 +93,16 @@ def find_clips(cfg, state):
             c["login"] = login
             c["facecam"] = kanaele.get(login, {}).get("facecam")
             result.append(c)
-        # Abwechslung: höchstens 2 Clips pro Streamer pro Durchlauf
+        # Bevorzugte Sprache (z.B. Deutsch) zuerst, danach nach Aufrufen
+        bevorzugt = tc.get("bevorzugte_sprache")
+        reihenfolge = sorted(result, key=lambda c: (c.get("language") == bevorzugt, c["view_count"]),
+                             reverse=True)
+        # Abwechslung: höchstens X Clips pro Streamer pro Durchlauf
+        max_pro = tc.get("max_clips_pro_streamer", 3)
         zaehler, gemischt = {}, []
-        for c in sorted(result, key=lambda c: c["view_count"], reverse=True):
+        for c in reihenfolge:
             zaehler[c["login"]] = zaehler.get(c["login"], 0) + 1
-            if zaehler[c["login"]] <= 2:
+            if zaehler[c["login"]] <= max_pro:
                 gemischt.append(c)
         return gemischt
 

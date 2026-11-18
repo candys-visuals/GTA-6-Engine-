@@ -6,8 +6,10 @@ twitch:
   client_secret: ""
   spiel: "Grand Theft Auto VI"      # exakter Kategorie-Name auf Twitch
   zeitraum_stunden: 6               # Clips der letzten X Stunden durchsuchen
-  min_views: 50                     # Clips mit weniger Aufrufen ignorieren
+  min_views: 30                     # Clips mit weniger Aufrufen ignorieren
   sprachen: ["de", "en"]            # leer [] = alle Sprachen
+  bevorzugte_sprache: "de"          # diese Sprache kommt zuerst dran (Englisch nur als Auffüller)
+  max_clips_pro_streamer: 3         # pro Durchlauf, damit nicht nur ein Streamer kommt
 
 # true  = die beliebtesten Clips ALLER Streamer in der GTA-6-Kategorie
 # false = nur die Kanäle aus der Liste "kanaele"
@@ -25,7 +27,7 @@ video:
   modus: "zusammenschnitt"   # "zusammenschnitt" = mehrere Clips zu 1 Video, "einzeln" = 1 Clip pro Video
   max_sekunden: 59
   min_clips_pro_zusammenschnitt: 2
-  max_videos_pro_durchlauf: 1
+  max_videos_pro_durchlauf: 2
   facecam_automatisch: true  # Facecam per Gesichtserkennung finden → oben Facecam, unten Gameplay
   nur_mit_facecam: true      # Clips ohne erkennbare Facecam überspringen
   hook_text: "GTA 6 IST DA"  # großer Text in den ersten 3 Sekunden (leer = aus)
