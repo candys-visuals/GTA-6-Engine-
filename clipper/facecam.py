@@ -60,10 +60,14 @@ def detect(path, debug=False):
     kandidaten.sort(key=lambda k: k[0], reverse=True)
     best = None
     for anzahl, cluster in kandidaten:
-        if anzahl < len(frames) * 0.4:
+        if anzahl < len(frames) * 0.5:
             break
         a = np.array(cluster)
         cx, cy, fw, fh = (float(np.median(a[:, k])) for k in (1, 2, 3, 4))
+        # Webcams sitzen am Rand / in einer Ecke. Ein Gesicht mitten im Bild ist fast immer
+        # eine Spielfigur (Zwischensequenz) → ignorieren.
+        if abs(cx - BW / 2) < BW * 0.30 and abs(cy - BH / 2) < BH * 0.25:
+            continue
         x0, y0 = int(max(0, cx - fw / 2)), int(max(0, cy - fh / 2))
         bewegung = float(std[y0:int(cy + fh / 2), x0:int(cx + fw / 2)].mean())
         if bewegung >= 5:
