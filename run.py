@@ -47,20 +47,33 @@ def plane_videos(clips, vcfg):
     if vcfg.get("modus") == "einzeln":
         return [[c] for c in clips[:max_videos]]
 
+    mindest = vcfg.get("min_clips_pro_zusammenschnitt", 2)
+
+    def gueltig(gruppe, summe):
+        # Ein langer Clip (≥ 40 s) darf allein ein Video sein, sonst mind. X Clips und ≥ 20 s
+        return summe >= 40 or (len(gruppe) >= mindest and summe >= 20)
+
     videos, aktuell, summe = [], [], 0.0
     for c in clips:
         rest = max_s - summe
-        if rest < 4:
-            videos.append(aktuell)
+        # Würde der Clip zu einem kurzen Schnipsel abgeschnitten, lieber neues Video anfangen
+        if aktuell and c["duration"] > rest and rest < 10:
+            if gueltig(aktuell, summe):
+                videos.append(aktuell)
             aktuell, summe, rest = [], 0.0, max_s
             if len(videos) >= max_videos:
                 break
         aktuell.append(c)
         summe += min(c["duration"], rest)
-    if aktuell and len(videos) < max_videos and summe >= 20:
+        if summe >= max_s - 2:
+            if gueltig(aktuell, summe):
+                videos.append(aktuell)
+            aktuell, summe = [], 0.0
+            if len(videos) >= max_videos:
+                break
+    if aktuell and len(videos) < max_videos and gueltig(aktuell, summe):
         videos.append(aktuell)
-    mindest = vcfg.get("min_clips_pro_zusammenschnitt", 2)
-    return [v for v in videos if len(v) >= mindest]
+    return videos
 
 
 def baue_video(gruppe, cfg, arbeit, ausgabe):

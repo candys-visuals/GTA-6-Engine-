@@ -15,7 +15,13 @@ def transcribe(path, modell="small", geraet="auto"):
                 geraet = "cpu"
         _model = WhisperModel(modell, device=geraet,
                               compute_type="float16" if geraet == "cuda" else "int8")
-    segments, _info = _model.transcribe(str(path), word_timestamps=True, vad_filter=True)
+    # Audio selbst mit ffmpeg dekodieren (unabhängig von PyAV-Versionen)
+    import subprocess
+    import numpy as np
+    pcm = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-f", "f32le", "-ac", "1",
+                          "-ar", "16000", "-"], capture_output=True, check=True).stdout
+    audio = np.frombuffer(pcm, dtype=np.float32)
+    segments, _info = _model.transcribe(audio, word_timestamps=True, vad_filter=True)
     words = []
     for seg in segments:
         for w in seg.words or []:
