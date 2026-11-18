@@ -1,0 +1,56 @@
+# ===== GTA 6 Clip-Engine – Einstellungen =====
+# Kopiere diese Datei zu "config.yaml" und trage deine Daten ein.
+
+twitch:
+  client_id: ""   # kommt aus GitHub Secrets
+  client_secret: ""
+  spiel: "Grand Theft Auto VI"      # exakter Kategorie-Name auf Twitch
+  zeitraum_stunden: 6               # Clips der letzten X Stunden durchsuchen
+  min_views: 50                     # Clips mit weniger Aufrufen ignorieren
+  sprachen: ["de", "en"]            # leer [] = alle Sprachen
+
+# true  = die beliebtesten Clips ALLER Streamer in der GTA-6-Kategorie
+# false = nur die Kanäle aus der Liste "kanaele"
+alle_kanaele: true
+
+# Streamer, die du nie verwenden willst (z.B. wenn sich jemand beschwert)
+sperrliste: []
+
+# Bei alle_kanaele: false → nur diese Kanäle.
+# Bei alle_kanaele: true  → hier nur Facecam-Positionen für bekannte Streamer eintragen.
+# Facecam = Position im Stream in Pixeln (bei 1920x1080).
+kanaele: []
+
+video:
+  modus: "zusammenschnitt"   # "zusammenschnitt" = mehrere Clips zu 1 Video, "einzeln" = 1 Clip pro Video
+  max_sekunden: 59
+  min_clips_pro_zusammenschnitt: 2
+  max_videos_pro_durchlauf: 1
+  hook_text: "GTA 6 IST DA"  # großer Text in den ersten 3 Sekunden (leer = aus)
+  schrift: "Montserrat"     # Windows: "Arial Black", Mac: "Arial Black" oder "Impact"
+  untertitel_farbe: "&H00FFFFFF"     # Weiß (ASS-Format &HAABBGGRR)
+  highlight_farbe: "&H0000E5FF"      # Gelb für das gerade gesprochene Wort
+
+untertitel:
+  aktiv: true
+  whisper_modell: "small"    # "base" = schneller, "medium" = genauer (braucht mehr Leistung)
+  geraet: "cpu"             # "cuda" wenn du eine NVIDIA-Grafikkarte hast, sonst "cpu"
+  woerter_pro_zeile: 3
+
+upload:
+  # TikTok: Video landet als Entwurf in deiner TikTok-App (Postfach) – du tippst nur noch auf "Posten".
+  tiktok:
+    aktiv: false
+    client_key: ""   # kommt aus GitHub Secrets
+    client_secret: ""
+    redirect_uri: "https://github.com/candys-visuals/GTA-6-Engine-"
+  # YouTube Shorts: wird direkt hochgeladen.
+  youtube:
+    aktiv: false
+    client_secrets_datei: "youtube_client_secret.json"
+    sichtbarkeit: "private"  # "private", "unlisted" oder "public"
+  titel_vorlage: "{titel} 😂 | {streamer} #gta6 #gtavi #gta #shorts"
+  beschreibung: "Clips von twitch.tv/{streamer} – schaut bei ihnen vorbei! #gta6 #gtavi"
+
+# Wie oft die Engine läuft, steht in .github/workflows/clips.yml (cron)
+ausgabe_ordner: "ausgabe"

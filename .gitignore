@@ -1,0 +1,6 @@
+ausgabe/
+persist/
+*.db
+*_token.json
+youtube_client_secret.json
+__pycache__/

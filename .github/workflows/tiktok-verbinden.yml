@@ -1,0 +1,84 @@
+name: TikTok verbinden
+
+# Schritt 1: "Run workflow" OHNE Eingabe → im Ergebnis steht der Login-Link.
+# Schritt 2: Link öffnen, bei TikTok einloggen, danach die komplette Adresse aus der
+#            Adresszeile kopieren und "Run workflow" erneut starten, diesmal mit der Adresse.
+
+on:
+  workflow_dispatch:
+    inputs:
+      adresse:
+        description: "Adresse nach dem TikTok-Login (für Schritt 1 leer lassen)"
+        required: false
+        default: ""
+
+concurrency:
+  group: engine
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verbinden:
+    runs-on: ubuntu-latest
+    env:
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      CACHE_KEY: ${{ secrets.CACHE_KEY }}
+      TIKTOK_TOKEN_DATEI: persist/tiktok_token.json
+      ADRESSE: ${{ inputs.adresse }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zugangsdaten prüfen
+        run: |
+          for v in TIKTOK_CLIENT_KEY TIKTOK_CLIENT_SECRET CACHE_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v fehlt (Settings → Secrets and variables → Actions)"; exit 1; fi
+          done
+          if [ -n "$ADRESSE" ]; then echo "::add-mask::$ADRESSE"; fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -q requests pyyaml
+
+      - name: "Schritt 1: Login-Link anzeigen"
+        if: env.ADRESSE == ''
+        run: |
+          LINK=$(python run.py tiktok-link)
+          {
+            echo "## Schritt 1: Bei TikTok einloggen"
+            echo ""
+            echo "[👉 Hier tippen und mit Cartoon King einloggen]($LINK)"
+            echo ""
+            echo "Danach landest du auf GitHub. Kopiere die **komplette Adresse** aus der Adresszeile"
+            echo "und starte *TikTok verbinden* nochmal – diesmal mit der Adresse im Eingabefeld."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Gespeicherten Stand laden
+        if: env.ADRESSE != ''
+        uses: actions/cache/restore@v4
+        with:
+          path: persist.enc
+          key: persist-${{ github.run_id }}
+          restore-keys: persist-
+
+      - name: "Schritt 2: TikTok verbinden"
+        if: env.ADRESSE != ''
+        run: |
+          mkdir -p persist
+          if [ -f persist.enc ]; then
+            openssl enc -d -aes-256-cbc -pbkdf2 -pass env:CACHE_KEY -in persist.enc | tar -xz -C persist
+          fi
+          python run.py login-tiktok --code "$ADRESSE"
+          tar -cz -C persist . | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:CACHE_KEY -out persist.enc
+          echo "## ✅ TikTok ist verbunden – neue Videos landen ab jetzt als Entwurf in deiner TikTok-App." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stand speichern
+        if: env.ADRESSE != ''
+        uses: actions/cache/save@v4
+        with:
+          path: persist.enc
+          key: persist-${{ github.run_id }}-${{ github.run_attempt }}
