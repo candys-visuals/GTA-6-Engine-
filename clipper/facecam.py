@@ -49,6 +49,10 @@ def detect(path, debug=False):
 
     grau = np.stack([cv2.cvtColor(f, cv2.COLOR_BGR2GRAY).astype(np.float32) for f in frames])
     std = grau.std(axis=0)
+    # Fast alles im Bild steht still = Menü, Countdown, Ladebildschirm oder Kamera-Vollbild
+    # → kein Gameplay, Clip überspringen
+    if float((std < 18).mean()) > 0.6:
+        return None
 
     # Stabile Gesichtsposition finden (gleiche Stelle in vielen Bildern).
     # Ein echtes Webcam-Gesicht bewegt sich leicht (reden, Mimik) – ein Gesicht auf einem
