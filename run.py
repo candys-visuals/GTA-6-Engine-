@@ -165,6 +165,9 @@ def durchlauf(cfg, state, upload=True):
     benoetigt = vcfg.get("max_videos_pro_durchlauf", 1) * vcfg.get("max_sekunden", 59) + 30
     kandidaten, summe = [], 0.0
     for c in clips[:40]:
+        if state.is_same_moment(c) or any(
+                k["login"] == c["login"] and abs(State._zeit(k) - State._zeit(c)) < 120 for k in kandidaten):
+            continue  # gleicher Moment wurde schon (von jemand anderem) geclippt
         try:
             c["datei"] = twitch.download(c, Path(ausgabe) / "_downloads")
         except Exception as e:
@@ -187,6 +190,7 @@ def durchlauf(cfg, state, upload=True):
             fertig = baue_video(gruppe, cfg, Path(ausgabe) / "_arbeit", ausgabe)
             for c in gruppe:
                 state.mark_used(c["id"])
+                state.mark_moment(c)
             state.add_video(str(fertig), [c["id"] for c in gruppe])
             if upload:
                 namen = ", ".join(dict.fromkeys(c["broadcaster_name"] for c in gruppe))

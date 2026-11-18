@@ -13,6 +13,25 @@ class State:
             "CREATE TABLE IF NOT EXISTS videos (datei TEXT PRIMARY KEY, clips TEXT, "
             "tiktok TEXT, youtube TEXT, ts REAL)"
         )
+        self.db.execute(
+            "CREATE TABLE IF NOT EXISTS momente (streamer TEXT, ts REAL)"
+        )
+        self.db.commit()
+
+    @staticmethod
+    def _zeit(clip):
+        import datetime as dt
+        return dt.datetime.fromisoformat(clip["created_at"].replace("Z", "+00:00")).timestamp()
+
+    def is_same_moment(self, clip, fenster=120):
+        """Gleicher Streamer, Clip innerhalb von 2 Minuten erstellt = sehr wahrscheinlich derselbe Moment."""
+        t = self._zeit(clip)
+        return self.db.execute(
+            "SELECT 1 FROM momente WHERE streamer=? AND ABS(ts-?)<?",
+            (clip["login"], t, fenster)).fetchone() is not None
+
+    def mark_moment(self, clip):
+        self.db.execute("INSERT INTO momente VALUES (?,?)", (clip["login"], self._zeit(clip)))
         self.db.commit()
 
     def is_used(self, clip_id):
