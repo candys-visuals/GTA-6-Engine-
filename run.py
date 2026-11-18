@@ -50,8 +50,9 @@ def plane_videos(clips, vcfg):
     mindest = vcfg.get("min_clips_pro_zusammenschnitt", 2)
 
     def gueltig(gruppe, summe):
-        # Ein langer Clip (≥ 40 s) darf allein ein Video sein, sonst mind. X Clips und ≥ 20 s
-        return summe >= 40 or (len(gruppe) >= mindest and summe >= 20)
+        # Ein Clip, der die ganze Länge füllt, darf allein ein Video sein,
+        # sonst mind. X Clips und mind. ~2/3 der Ziellänge
+        return summe >= max_s - 2 or (len(gruppe) >= mindest and summe >= min(20, max_s * 0.65))
 
     videos, aktuell, summe = [], [], 0.0
     for c in clips:

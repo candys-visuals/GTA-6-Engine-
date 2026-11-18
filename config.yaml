@@ -25,7 +25,7 @@ kanaele: []
 
 video:
   modus: "zusammenschnitt"   # "zusammenschnitt" = mehrere Clips zu 1 Video, "einzeln" = 1 Clip pro Video
-  max_sekunden: 59
+  max_sekunden: 30          # ab 10k Followern auf 59 stellen
   min_clips_pro_zusammenschnitt: 2
   max_videos_pro_durchlauf: 2
   facecam_automatisch: true  # Facecam per Gesichtserkennung finden → oben Facecam, unten Gameplay
